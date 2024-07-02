@@ -54,6 +54,10 @@ resource "aws_instance" "vault" {
     Name = "Vault-Server"
   }
 
+  provisioner "local-exec" {
+    command = "sleep 30"
+  }
+
   provisioner "remote-exec" {
     inline = [
       "sudo apt-get update -y",
@@ -73,8 +77,6 @@ resource "aws_instance" "vault" {
       private_key = tls_private_key.vault_ssh_key.private_key_pem
       host        = self.public_ip
     }
-
-    depends_on = [aws_instance.vault]
   }
 }
 
@@ -88,6 +90,10 @@ resource "aws_instance" "ssh_test" {
 
   tags = {
     Name = "SSH-Test-Instance-${count.index + 1}"
+  }
+
+  provisioner "local-exec" {
+    command = "sleep 30"
   }
 
   provisioner "remote-exec" {
@@ -106,8 +112,6 @@ resource "aws_instance" "ssh_test" {
       private_key = tls_private_key.vault_ssh_key.private_key_pem
       host        = self.public_ip
     }
-
-    depends_on = [aws_instance.ssh_test]
   }
 }
 
