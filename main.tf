@@ -3,6 +3,11 @@ resource "tls_private_key" "vault_ssh_key" {
   rsa_bits  = 4096
 }
 
+resource "aws_key_pair" "generated_key" {
+  key_name   = "generated-key"
+  public_key = tls_private_key.vault_ssh_key.public_key_openssh
+}
+
 resource "aws_vpc" "main" {
   cidr_block = var.vpc_cidr
 }
@@ -39,11 +44,11 @@ resource "aws_security_group" "allow_ssh" {
 }
 
 resource "aws_instance" "vault" {
-  ami           = data.aws_ami.ubuntu.id
-  instance_type = var.instance_type
-  subnet_id     = aws_subnet.main.id
-  security_groups = [aws_security_group.allow_ssh.name]
-  key_name      = var.key_name
+  ami                    = data.aws_ami.ubuntu.id
+  instance_type          = var.instance_type
+  subnet_id              = aws_subnet.main.id
+  vpc_security_group_ids = [aws_security_group.allow_ssh.id]
+  key_name               = aws_key_pair.generated_key.key_name
 
   tags = {
     Name = "Vault-Server"
@@ -72,12 +77,12 @@ resource "aws_instance" "vault" {
 }
 
 resource "aws_instance" "ssh_test" {
-  count         = 2
-  ami           = data.aws_ami.ubuntu.id
-  instance_type = var.instance_type
-  subnet_id     = aws_subnet.main.id
-  security_groups = [aws_security_group.allow_ssh.name]
-  key_name      = var.key_name
+  count                  = 2
+  ami                    = data.aws_ami.ubuntu.id
+  instance_type          = var.instance_type
+  subnet_id              = aws_subnet.main.id
+  vpc_security_group_ids = [aws_security_group.allow_ssh.id]
+  key_name               = aws_key_pair.generated_key.key_name
 
   tags = {
     Name = "SSH-Test-Instance-${count.index + 1}"
