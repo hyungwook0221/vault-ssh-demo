@@ -1,5 +1,6 @@
-provider "aws" {
-  region = var.region
+resource "tls_private_key" "vault_ssh_key" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
 }
 
 resource "aws_vpc" "main" {
@@ -56,7 +57,9 @@ resource "aws_instance" "vault" {
       "unzip vault_${var.vault_version}_linux_amd64.zip",
       "sudo mv vault /usr/local/bin/",
       "export VAULT_DEV_ROOT_TOKEN_ID=root",
-      "vault server -dev -dev-root-token-id=root -dev-listen-address=0.0.0.0:8200 &"
+      "vault server -dev -dev-root-token-id=root -dev-listen-address=0.0.0.0:8200 &",
+      "echo '${tls_private_key.vault_ssh_key.private_key_pem}' > /home/ubuntu/vault_ssh_key.pem",
+      "chmod 600 /home/ubuntu/vault_ssh_key.pem"
     ]
 
     connection {
@@ -83,7 +86,11 @@ resource "aws_instance" "ssh_test" {
   provisioner "remote-exec" {
     inline = [
       "sudo adduser --disabled-password --gecos '' ${var.user_name}",
-      "echo '${var.user_name}:${var.user_password}' | sudo chpasswd"
+      "echo '${var.user_name}:${var.user_password}' | sudo chpasswd",
+      "mkdir -p /home/${var.user_name}/.ssh",
+      "echo '${tls_private_key.vault_ssh_key.public_key_openssh}' >> /home/${var.user_name}/.ssh/authorized_keys",
+      "chown -R ${var.user_name}:${var.user_name} /home/${var.user_name}/.ssh",
+      "chmod 600 /home/${var.user_name}/.ssh/authorized_keys"
     ]
 
     connection {
