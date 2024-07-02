@@ -65,7 +65,7 @@ resource "aws_instance" "vault" {
     connection {
       type        = "ssh"
       user        = "ubuntu"
-      private_key = file(var.private_key_path)
+      private_key = tls_private_key.vault_ssh_key.private_key_pem
       host        = self.public_ip
     }
   }
@@ -96,7 +96,7 @@ resource "aws_instance" "ssh_test" {
     connection {
       type        = "ssh"
       user        = "ubuntu"
-      private_key = file(var.private_key_path)
+      private_key = tls_private_key.vault_ssh_key.private_key_pem
       host        = self.public_ip
     }
   }
