@@ -3,7 +3,7 @@ terraform {
     organization = "hyungwook"
 
     workspaces {
-      name = "default"
+      name = "vault-ssh-demo"
     }
   }
 }
