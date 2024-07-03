@@ -8,7 +8,7 @@ output "ssh_test_instance_public_ips" {
 
 output "vault_ssh_private_key" {
   value     = tls_private_key.vault_ssh_key.private_key_pem
-  sensitive = true
+  sensitive = false
 }
 
 output "vault_ssh_public_key" {
