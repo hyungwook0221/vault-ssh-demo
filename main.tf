@@ -93,10 +93,11 @@ resource "aws_instance" "vault" {
       "wget https://releases.hashicorp.com/vault/${var.vault_version}/vault_${var.vault_version}_linux_amd64.zip",
       "unzip vault_${var.vault_version}_linux_amd64.zip",
       "sudo mv vault /usr/local/bin/",
+      "sudo chmod 755 /usr/local/bin/vault",
       "export VAULT_DEV_ROOT_TOKEN_ID=root",
       "vault server -dev -dev-root-token-id=root -dev-listen-address=0.0.0.0:8200 &",
-      "echo '${tls_private_key.vault_ssh_key.private_key_pem}' > /home/ubuntu/vault_ssh_key.pem",
-      "chmod 600 /home/ubuntu/vault_ssh_key.pem"
+      "echo '${tls_private_key.vault_ssh_key.private_key_pem}' | sudo tee /home/ubuntu/vault_ssh_key.pem",
+      "sudo chmod 600 /home/ubuntu/vault_ssh_key.pem"
     ]
 
     connection {
@@ -123,12 +124,12 @@ resource "aws_instance" "ssh_test" {
 
   provisioner "remote-exec" {
     inline = [
-      "sudo adduser --disabled-password --gecos '' ${var.user_name}",
-      "echo '${var.user_name}:${var.user_password}' | sudo chpasswd",
-      "mkdir -p /home/${var.user_name}/.ssh",
-      "echo '${tls_private_key.vault_ssh_key.public_key_openssh}' >> /home/${var.user_name}/.ssh/authorized_keys",
-      "chown -R ${var.user_name}:${var.user_name} /home/${var.user_name}/.ssh",
-      "chmod 600 /home/${var.user_name}/.ssh/authorized_keys"
+      "sudo adduser --disabled-password --gecos '' ${var.user_name} || exit 1",
+      "echo '${var.user_name}:${var.user_password}' | sudo chpasswd || exit 1",
+      "sudo mkdir -p /home/${var.user_name}/.ssh || exit 1",
+      "echo '${tls_private_key.vault_ssh_key.public_key_openssh}' | sudo tee -a /home/${var.user_name}/.ssh/authorized_keys || exit 1",
+      "sudo chown -R ${var.user_name}:${var.user_name} /home/${var.user_name}/.ssh || exit 1",
+      "sudo chmod 600 /home/${var.user_name}/.ssh/authorized_keys || exit 1"
     ]
 
     connection {
