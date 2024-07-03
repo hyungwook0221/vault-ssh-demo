@@ -16,10 +16,17 @@ resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
 }
 
-resource "aws_subnet" "public" {
+resource "aws_subnet" "public_a" {
   vpc_id                  = aws_vpc.main.id
-  cidr_block              = var.subnet_cidr
-  availability_zone       = var.availability_zone
+  cidr_block              = var.subnet_cidr_a
+  availability_zone       = var.availability_zone_a
+  map_public_ip_on_launch = true
+}
+
+resource "aws_subnet" "public_b" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = var.subnet_cidr_b
+  availability_zone       = var.availability_zone_b
   map_public_ip_on_launch = true
 }
 
@@ -32,8 +39,13 @@ resource "aws_route_table" "public" {
   }
 }
 
-resource "aws_route_table_association" "public" {
-  subnet_id      = aws_subnet.public.id
+resource "aws_route_table_association" "public_a" {
+  subnet_id      = aws_subnet.public_a.id
+  route_table_id = aws_route_table.public.id
+}
+
+resource "aws_route_table_association" "public_b" {
+  subnet_id      = aws_subnet.public_b.id
   route_table_id = aws_route_table.public.id
 }
 
@@ -65,7 +77,7 @@ resource "aws_security_group" "allow_ssh" {
 resource "aws_instance" "vault" {
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = var.instance_type
-  subnet_id              = aws_subnet.public.id
+  subnet_id              = aws_subnet.public_a.id
   vpc_security_group_ids = [aws_security_group.allow_ssh.id]
   key_name               = aws_key_pair.generated_key.key_name
   associate_public_ip_address = true
@@ -100,7 +112,7 @@ resource "aws_instance" "ssh_test" {
   count                  = 2
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = var.instance_type
-  subnet_id              = aws_subnet.public.id
+  subnet_id              = aws_subnet.public_b.id
   vpc_security_group_ids = [aws_security_group.allow_ssh.id]
   key_name               = aws_key_pair.generated_key.key_name
   associate_public_ip_address = true
